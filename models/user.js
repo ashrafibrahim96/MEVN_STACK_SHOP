@@ -1,5 +1,6 @@
 const mongoose=require('mongoose')
-const crypto=require('crypto')
+// const crypto=require('crypto')
+const bcrypt=require('bcrypt')
 const uuidv1 = require('uuid/v1')
 const userSchema= new mongoose.Schema({
     name: {
@@ -36,16 +37,28 @@ const userSchema= new mongoose.Schema({
 
 
 //virtual field 
-userSchema.virtual("password")
-.set(function(password){
-    this._password=password;
-    this.salt=uuidv1()
-    this.hashed_password=this.encryptPassword('password')
-})
-.get(function (){
-    return this._password;
-})
+// userSchema.virtual("password")
+// .set(function(password){
+//     this._password=password;
+//     this.salt=uuidv1()
+//     this.hashed_password=this.encryptPassword('password')
+// })
+// .get(function (){
+//     return this._password;
+// })
+userSchema.virtual('password')
+.set(function(password) {
+    this.hashed_password = bcrypt.hashSync(password,10)
+ });
+ 
+
 userSchema.methods = {
+    // authenticate: function(plainText){
+    //     return this.encryptPassword(plainText) === this.hashed_password ;
+    // },
+    authenticate: function(password){
+        return bcrypt.compareSync(password,this.hashed_password);
+    },
     encryptPassword : function (password){
         if (!password) return "";
         try {
@@ -60,5 +73,3 @@ userSchema.methods = {
     }
 }
 module.exports=mongoose.model('User',userSchema); 
-
-
