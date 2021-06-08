@@ -2,6 +2,7 @@ const User=require('../models/user')
 const jwt=require('jsonwebtoken') //generate token
 const expressJwt=require('express-jwt') //auth check
 const {errorHandler}= require('../helpers/dbErrorHandler')
+const user = require('../models/user')
 // const user = require('../models/user')
 exports.signup=(req,res)=>{
     const user=new User(req.body)
@@ -28,7 +29,8 @@ exports.signin=(req,res) =>{
 
         //authenticate in user model
         if (!user.authenticate(password)) {
-            return res.status(401).json({
+            return res.status(404).json({
+                success:false,
                 Error: "Email and password don't match"
             })
         }
@@ -40,7 +42,9 @@ exports.signin=(req,res) =>{
         res.cookie('token',token,{expire: new Date()+9999})
         //return response with user and token to frontend
         const {_id,name,email,role}=user
-        return res.json({token,user:{_id,name,email,role}})
+        return res.status(200).json({
+            success:true,
+            token,user:{_id,name,email,role}})
     })
 }
 exports.signout = (req,res)=>{
@@ -52,5 +56,13 @@ exports.requireSignin = expressJwt({
     secret: process.env.JWT_SECRET,
     userProperty: 'auth'
 });
-
+exports.getAll=(req,res)=>{
+    user.find({},function(err,users){
+        var userlist={};
+        users.forEach(user => {
+            userlist[user.name]=user;
+        });
+        res.send(userlist);
+    })
+}
 
